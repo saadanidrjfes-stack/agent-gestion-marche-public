@@ -1,70 +1,30 @@
-name: Agent Admin V2 - Cerveau Gemini Gratuit
+name: Agent Admin V2.2 Auto-Fix
 on:
   issues:
     types: [opened, reopened]
   workflow_dispatch:
 permissions:
   issues: write
-
 jobs:
   cerveau:
     runs-on: ubuntu-latest
     steps:
-      - name: Analyse IA avec Gemini Gratuit
-        uses: actions/github-script@v7
+      - uses: actions/github-script@v7
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         with:
           script: |
             const titre = context.payload.issue.title;
-            const description = context.payload.issue.body || "Pas de description";
-
-            const prompt = `
-            Tu es un expert senior en gestion des marchés publics au Maroc.
-            Loi principale: Décret n°2-22-431.
-            Tâche à analyser:
-            Titre: ${titre}
-            Description: ${description}
-
-            Réponds en 4 parties courtes en français:
-            1. 🤖 COMPRÉHENSION: Résume ce que le demandeur veut en 1 phrase.
-            2. 📚 ARTICLE DE LOI CONCERNÉ: Quel article/décret pourrait s'appliquer? (Si tu ne sais pas, dis "À vérifier dans la base de connaissance PDF")
-            3. 🛠️ ACTION TECHNIQUE: Que doit faire le développeur concrètement? (ex: créer table, champ, API)
-            4. ✅ NEXT STEP: Mets cette tâche en Todo et propose une estimation.
-            Sois concis, professionnel.
-            `;
-
-            let analyseIA = "Analyse IA non disponible (clé manquante).";
-
-            try {
-             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  contents: [{ parts: [{ text: prompt }] }]
-                })
-              });
-              const data = await response.json();
-              analyseIA = data.candidates?.[0]?.content?.parts?.[0]?.text || "Erreur IA: " + JSON.stringify(data).substring(0, 500);
-            } catch (e) {
-              analyseIA = "Erreur lors de l'appel Gemini: " + e.message + ". Vérifie que ton secret GEMINI_API_KEY est bien créé.";
+            const description = context.payload.issue.body || "";
+            const prompt = `Tu es expert marchés publics Maroc décret 2-22-431. Tâche: Titre=${titre} Description=${description}. Réponds en français en 4 parties: 1. COMPREHENSION 2. ARTICLE LOI 3. ACTION TECHNIQUE 4. NEXT STEP. Concis.`;
+            const modeles = ["gemini-2.0-flash", "gemini-2.5-flash-lite", "gemini-1.5-flash-8b"];
+            let analyseIA = "";
+            for (const m of modeles) {
+              try {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${process.env.GEMINI_API_KEY}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({contents:[{parts:[{text:prompt}]}]}) });
+                const d = await r.json();
+                if (d.candidates) { analyseIA = d.candidates[0].content.parts[0].text; break; }
+              } catch(e){}
             }
-
-            const commentaireFinal = `Bonjour 👋 Merci pour cette tâche!
-
-            ✅ Ajoutée au Project Admin en Todo
-            🏷️ Milestone: V1 - Base stable
-
-            ---
-            ### 🧠 Analyse par le Cerveau Gratuit (Gemini)
-            ${analyseIA}
-            ---
-            *Agent V2 - 0€ - En attente de la base de lois PDF*
-            `;
-
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: commentaireFinal
-            });
+            if (!analyseIA) analyseIA = "IA indisponible, vérifie GEMINI_API_KEY dans Secrets.";
+            await github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: `Bonjour 👋\n\n✅ Project Admin Todo\n\n### 🧠 Analyse Cerveau Gratuit (Gemini)\n${analyseIA}\n\n---\n*V2.2 Auto-Fix - Prêt pour base PDF*` });
