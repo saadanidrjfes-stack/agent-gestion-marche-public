@@ -1,26 +1,8 @@
-name: Agent Admin V1
+name: Agent Admin V1.1 Stable
 on:
   issues:
-    types: [opened]
-
-permissions:
-  issues: write
-  projects: write
-
-jobs:
-  accueil:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Répondre à la nouvelle tâche
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          issue-number: ${{ github.event.issue.number }}
-          body: |
-            Bonjour 👋 Merci pour cette tâche!
-            name: Agent Admin V1.1 Stable
-on:
-  issues:
-    types: [opened]
+    types: [opened, reopened]
+  workflow_dispatch:
 permissions:
   issues: write
 jobs:
@@ -34,12 +16,10 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `Bonjour 👋 Merci pour cette tâche!\n\n✅ Ajoutée au Project Admin en Todo\n🏷️ Milestone: V1 - Base stable\n\nTest réussi!`
+              body: `Bonjour 👋 Merci pour cette tâche!
+
+              ✅ Ajoutée au Project Admin en Todo
+              🏷️ Milestone: V1 - Base stable
+
+              Test réussi, l'agent répond!`
             })
-
-            ✅ Ajoutée au Project Admin
-            🏷️ Milestone: V1 - Base stable
-
-            L'agent va la traiter. Statut: À faire.
-            ---
-            *Réponse automatique V1 - 0 budget*
