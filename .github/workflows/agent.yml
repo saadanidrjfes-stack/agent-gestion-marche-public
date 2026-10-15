@@ -17,6 +17,25 @@ jobs:
           issue-number: ${{ github.event.issue.number }}
           body: |
             Bonjour 👋 Merci pour cette tâche!
+            name: Agent Admin V1.1 Stable
+on:
+  issues:
+    types: [opened]
+permissions:
+  issues: write
+jobs:
+  accueil:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Bonjour 👋 Merci pour cette tâche!\n\n✅ Ajoutée au Project Admin en Todo\n🏷️ Milestone: V1 - Base stable\n\nTest réussi!`
+            })
 
             ✅ Ajoutée au Project Admin
             🏷️ Milestone: V1 - Base stable
